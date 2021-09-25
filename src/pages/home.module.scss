@@ -1,1 +1,48 @@
-// TODO
+.header {
+  margin: 8rem 37.2rem 1.6rem;
+}
+
+.main {
+  margin: 4.8rem 37rem 8rem;
+}
+
+.listaDePosts {
+  display: flex;
+  flex-direction: column;
+  gap: 4.8rem;
+}
+
+.post {
+  h2 {
+    font-size: 2.8rem;
+    font-weight: 700;
+  }
+
+  p {
+    font-size: 1.8rem;
+    margin-top: .8rem;
+  }
+
+  div {
+    display: flex;
+    gap: 2.4rem;
+    margin-top: 2.4rem;
+
+    font-size: 1.4rem;
+
+    time {
+
+    }
+
+    span {
+
+    }
+  }
+}
+
+.carregarMais {
+  margin-top: 6.4rem;
+  font-size: 1.8rem;
+  border: none;
+  background: none;
+}
