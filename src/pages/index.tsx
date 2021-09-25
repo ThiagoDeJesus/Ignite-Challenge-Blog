@@ -4,6 +4,7 @@ import Prismic from '@prismicio/client';
 import { format } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 
+import { useState } from 'react';
 import { getPrismicClient } from '../services/prismic';
 
 import commonStyles from '../styles/common.module.scss';
@@ -29,7 +30,18 @@ interface HomeProps {
 }
 
 export default function Home({ postsPagination }: HomeProps): JSX.Element {
-  const posts = postsPagination.results;
+  const [postsPaginationState, setPostsPaginationState] =
+    useState(postsPagination);
+  const posts = postsPaginationState.results;
+
+  function getNewPosts(nextPage: string): void {
+    fetch(nextPage)
+      .then(res => res.json())
+      .then(res => {
+        res.results = [...postsPaginationState.results, ...res.results];
+        setPostsPaginationState(res);
+      });
+  }
 
   return (
     <>
@@ -39,13 +51,21 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
       <main className={styles.main}>
         <ul className={styles.listaDePosts}>
           {posts.map(post => (
-            <li className={styles.post}>
-              <Link key={post.uid} href={`/post/${post.uid}`}>
+            <li key={post.uid} className={styles.post}>
+              <Link href={`/post/${post.uid}`}>
                 <a>
                   <h2>{post.data.title}</h2>
                   <p>{post.data.subtitle}</p>
                   <div>
-                    <time>{post.first_publication_date}</time>
+                    <time>
+                      {format(
+                        new Date(post.first_publication_date),
+                        `dd MMM yyyy`,
+                        {
+                          locale: ptBR,
+                        }
+                      )}
+                    </time>
                     <span className={commonStyles.author}>
                       {post.data.author}
                     </span>
@@ -55,12 +75,17 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
             </li>
           ))}
         </ul>
-        <button
-          type="button"
-          className={`${commonStyles.highlight} ${styles.carregarMais}`}
-        >
-          Carregar mais posts
-        </button>
+        {postsPaginationState.next_page && (
+          <button
+            type="button"
+            className={`${commonStyles.highlight} ${styles.carregarMais}`}
+            onClick={() => {
+              getNewPosts(postsPaginationState.next_page);
+            }}
+          >
+            Carregar mais posts
+          </button>
+        )}
       </main>
     </>
   );
@@ -69,22 +94,12 @@ export default function Home({ postsPagination }: HomeProps): JSX.Element {
 export const getStaticProps: GetStaticProps = async () => {
   const prismic = getPrismicClient();
   const postsResponse = await prismic.query(
-    Prismic.predicates.at('document.type', 'posts')
+    Prismic.predicates.at('document.type', 'posts'),
+    { pageSize: 1 }
   );
 
   const postsPagination = postsResponse;
-  postsPagination.results = postsPagination.results.map(post => {
-    return {
-      ...post,
-      first_publication_date: format(
-        new Date(post.first_publication_date),
-        `dd MMM yyyy`,
-        {
-          locale: ptBR,
-        }
-      ),
-    };
-  });
+  console.log(postsPagination);
 
   return {
     props: {
