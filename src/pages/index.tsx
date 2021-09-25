@@ -1,5 +1,8 @@
 import { GetStaticProps } from 'next';
 import Link from 'next/link';
+import Prismic from '@prismicio/client';
+import { format } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
 
 import { getPrismicClient } from '../services/prismic';
 
@@ -25,7 +28,9 @@ interface HomeProps {
   postsPagination: PostPagination;
 }
 
-export default function Home(): JSX.Element {
+export default function Home({ postsPagination }: HomeProps): JSX.Element {
+  const posts = postsPagination.results;
+
   return (
     <>
       <header className={styles.header}>
@@ -33,42 +38,22 @@ export default function Home(): JSX.Element {
       </header>
       <main className={styles.main}>
         <ul className={styles.listaDePosts}>
-          <li className={styles.post}>
-            <Link href="/post/slugDoPost">
-              <a>
-                <h2>Como utilizar Hooks</h2>
-                <p>Pensando em sincronização em vez de ciclos de vida</p>
-                <div>
-                  <time>15 Mar 2021</time>
-                  <span className={commonStyles.author}>Joseph Oliveira</span>
-                </div>
-              </a>
-            </Link>
-          </li>
-          <li className={styles.post}>
-            <Link href="/post/slugDoPost">
-              <a>
-                <h2>Como utilizar Hooks</h2>
-                <p>Pensando em sincronização em vez de ciclos de vida</p>
-                <div>
-                  <time>15 Mar 2021</time>
-                  <span>Joseph Oliveira</span>
-                </div>
-              </a>
-            </Link>
-          </li>
-          <li className={styles.post}>
-            <Link href="/post/slugDoPost">
-              <a>
-                <h2>Como utilizar Hooks</h2>
-                <p>Pensando em sincronização em vez de ciclos de vida</p>
-                <div>
-                  <time>15 Mar 2021</time>
-                  <span>Joseph Oliveira</span>
-                </div>
-              </a>
-            </Link>
-          </li>
+          {posts.map(post => (
+            <li className={styles.post}>
+              <Link key={post.uid} href={`/post/${post.uid}`}>
+                <a>
+                  <h2>{post.data.title}</h2>
+                  <p>{post.data.subtitle}</p>
+                  <div>
+                    <time>{post.first_publication_date}</time>
+                    <span className={commonStyles.author}>
+                      {post.data.author}
+                    </span>
+                  </div>
+                </a>
+              </Link>
+            </li>
+          ))}
         </ul>
         <button
           type="button"
@@ -81,9 +66,30 @@ export default function Home(): JSX.Element {
   );
 }
 
-// export const getStaticProps = async () => {
-//   // const prismic = getPrismicClient();
-//   // const postsResponse = await prismic.query(TODO);
+export const getStaticProps: GetStaticProps = async () => {
+  const prismic = getPrismicClient();
+  const postsResponse = await prismic.query(
+    Prismic.predicates.at('document.type', 'posts')
+  );
 
-//   // TODO
-// };
+  const postsPagination = postsResponse;
+  postsPagination.results = postsPagination.results.map(post => {
+    return {
+      ...post,
+      first_publication_date: format(
+        new Date(post.first_publication_date),
+        `dd MMM yyyy`,
+        {
+          locale: ptBR,
+        }
+      ),
+    };
+  });
+
+  return {
+    props: {
+      postsPagination,
+    },
+    revalidate: 60 * 60, // 1 hora
+  };
+};
