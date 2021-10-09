@@ -1,1 +1,35 @@
 // TODO
+.Main {
+}
+
+.Banner {
+  width: 100%;
+}
+
+.Post {
+  padding: 8rem 37rem;
+
+  header {
+    h1 {
+      font-size: 4.8rem;
+    }
+  }
+}
+
+.AboutThePost {
+  display: flex;
+  gap: 2.4rem;
+  align-items: center;
+
+  margin-top: 2.6rem;
+
+  > div {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+}
+
+.PostText {
+  margin-top: 6.4rem;
+}
